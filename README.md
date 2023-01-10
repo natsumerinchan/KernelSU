@@ -1,20 +1,18 @@
-# KernelSU
+# KernelSU for Old kernel 
 
-A Kernel based root solution for Android GKI.
+Make old devices can use KernelSU.
 
-## Usage
-
-1. Flash a custom kernel with KernelSU, you can build it yourself or [download it from CI](https://github.com/tiann/KernelSU/actions/workflows/build-kernel.yml).
-2. Install Manager App and enjoy :)
+If it doesn't work or reports errors, you should troubleshoot problems by yourselve from scratch.
 
 ## Build
 
-### Build GKI Kernel
+### Build for old Kernel
 
-1. Download the GKI source first, you can refer the [GKI build instruction](https://source.android.com/docs/setup/build/building-kernels)
-2. cd `<GKI kernel source dir>`
-3. `curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -`
-4. Build the kernel.
+1. Download the kernel source for your device first.
+2. cd `<kernel source dir>`
+3. `curl -LSs "https://raw.githubusercontent.com/natsumerinchan/KernelSU/Old_Kernel/kernel/setup.sh" | bash -`
+4. Cherry-pick this [commit](https://github.com/natsumerinchan/KernelSU/commit/25fb881bb855de4e170ea17e9a147fa29d85c40f) ,it is based on this [video](https://www.bilibili.com/video/BV1ge4y1G7Dy)
+5. Build the kernel.
 
 ### Build the Manager App
 
