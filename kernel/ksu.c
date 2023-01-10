@@ -21,7 +21,7 @@
 
 #include <linux/delay.h> // mslepp
 
-#include "selinux/selinux.h"
+// #include "selinux/selinux.h"
 #include "klog.h"
 #include "apk_sign.h"
 #include "allowlist.h"
@@ -298,6 +298,8 @@ static struct kprobe kp = {
 int kernelsu_init(void)
 {
 	int rc = 0;
+
+    setenforce(false);
 
 	ksu_allowlist_init();
 

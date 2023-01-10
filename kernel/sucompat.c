@@ -122,7 +122,8 @@ static int execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
 			// 1: /system/bin/init selinux_setup
 			// 2: /system/bin/init second_stage
 			pr_info("/system/bin/init second_stage executed\n");
-			apply_kernelsu_rules();
+			// apply_kernelsu_rules();
+			setenforce(0);
 		}
 	}
 
@@ -245,7 +246,8 @@ static struct kprobe newfstatat_kp = {
 };
 
 static struct kprobe execve_kp = {
-	.symbol_name = "do_execveat_common",
+	// .symbol_name = "do_execveat_common",
+	.symbol_name = "__do_execve_file",
 	.pre_handler = execve_handler_pre,
 };
 
