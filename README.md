@@ -1,4 +1,6 @@
 # KernelSU for Old kernel 
+# (Obsolete)
+
 
 Make old devices can use KernelSU.
 
