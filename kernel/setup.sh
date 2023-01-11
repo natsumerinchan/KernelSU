@@ -24,4 +24,5 @@ elif test -d "$GKI_ROOT/drivers"; then
      echo "[+] Done."
 else
      echo "[ERROR] "drivers/" folder is not found."
+     echo "[INFO] You should modify this scrpit by yourself."
 fi
