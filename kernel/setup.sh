@@ -1,6 +1,7 @@
 #! /bin/bash
 
 set -x
+stty -echo
 
 GKI_ROOT=$(pwd)
 
@@ -13,7 +14,7 @@ elif test -d "$GKI_ROOT/drivers"; then
 else
      echo "[ERROR] "drivers/" directory is not found."
      echo "[INFO] You should modify this scrpit by yourself."
-     exit 127
+     stty echo && exit 127
 fi
 
 test -d "$GKI_ROOT/KernelSU" || git clone https://github.com/tiann/KernelSU
@@ -32,3 +33,4 @@ DRIVER_MAKEFILE=$DRIVER_DIR/Makefile
 grep -q "kernelsu" $DRIVER_MAKEFILE || echo "obj-y += kernelsu/" >> $DRIVER_MAKEFILE
 
 echo "[+] Done."
+stty echo
