@@ -332,6 +332,17 @@ private fun ModuleItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                TextButton(
+                    enabled = !module.update,
+                    onClick = { onUpdate(module) }
+                ) {
+                    Text(
+                        fontFamily = MaterialTheme.typography.labelMedium.fontFamily,
+                        fontSize = MaterialTheme.typography.labelMedium.fontSize,
+                        text = stringResource(R.string.module_update),
+                    )
+                }
+
                 Spacer(modifier = Modifier.weight(1f, true))
 
                 TextButton(
