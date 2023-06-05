@@ -12,6 +12,7 @@ on:
     paths:
       - 'manager/**'
   workflow_call:
+  workflow_dispatch:
 
 jobs:
   build-ksud:
