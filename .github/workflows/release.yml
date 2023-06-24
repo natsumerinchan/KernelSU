@@ -15,12 +15,18 @@ jobs:
     uses: ./.github/workflows/build-kernel-a13.yml
   build-wsa-kernel:
     uses: ./.github/workflows/build-kernel-wsa.yml
+  build-arcvm-kernel:
+    uses: ./.github/workflows/build-kernel-arcvm.yml
+  build-fydeos-kernel:
+    uses: ./.github/workflows/build-kernel-fydeos.yml
   release:
     needs: 
       - build-manager
       - build-a12-kernel
       - build-a13-kernel
       - build-wsa-kernel
+      - build-arcvm-kernel
+      - build-fydeos-kernel
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -43,6 +49,24 @@ jobs:
             fi
           done
 
+      - name: Zip ChromeOS ARCVM kernel
+        run: |
+          for dir in kernel-ARCVM-*; do
+            if [ -d "$dir" ]; then
+              echo "------ Zip $dir ----------"
+              (cd $dir && zip -r9 "$dir".zip ./* -x .git .gitignore ./*.zip && mv *.zip ..)
+            fi
+          done
+
+      - name: Zip FydeOS kernel
+        run: |
+          for dir in kernel-FydeOS-*; do
+            if [ -d "$dir" ]; then
+              echo "------ Zip $dir ----------"
+              (cd $dir && zip -r9 "$dir".zip ./* -x .git .gitignore ./*.zip && mv *.zip ..)
+            fi
+          done
+
       - name: Display structure of downloaded files
         run: ls -R
 
@@ -54,3 +78,5 @@ jobs:
             AnyKernel3-*.zip
             boot-images-*/Image-*/*.img.gz
             kernel-WSA*.zip
+            kernel-ARCVM*.zip
+            kernel-FydeOS*.zip
