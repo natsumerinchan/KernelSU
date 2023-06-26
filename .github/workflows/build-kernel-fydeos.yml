@@ -90,6 +90,13 @@ jobs:
           echo "VERSION: $VERSION"
           echo "kernelsu_version=$VERSION" >> $GITHUB_ENV
 
+      - name: Apply FydeOS patches
+        working-directory: kernel
+        run: |
+          git clone -b main https://github.com/openFyde/project-openfyde-patches.git
+          cp ./project-openfyde-patches/sys-kernel/chromeos-kernel-5_4/files/*.patch ./
+          git apply ./*.patch
+        
       - name: Build Kernel
         working-directory: kernel
         run: |
