@@ -66,7 +66,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup kernel source
-        run: git clone https://chromium.googlesource.com/chromiumos/third_party/kernel.git -b ${{ matrix.git_tag }} --depth=1
+        run: git clone https://chromium.googlesource.com/chromiumos/third_party/kernel.git -b ${{ matrix.git_tag }}
 
       - name: Setup KernelSU
         working-directory: kernel
@@ -93,6 +93,7 @@ jobs:
       - name: Apply FydeOS patches
         working-directory: kernel
         run: |
+          git checkout f4a8f4fd8d411b564fb6a63486cf61744a60283a
           git clone -b main https://github.com/openFyde/project-openfyde-patches.git
           cp ./project-openfyde-patches/sys-kernel/chromeos-kernel-5_4/files/*.patch ./
           git apply ./*.patch
