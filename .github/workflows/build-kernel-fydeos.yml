@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64]
-        version: ["5.4.177"]
+        version: ["5.4.217"]
         include:
           - arch: x86_64
             git_tag: chromeos-5.4
@@ -67,8 +67,16 @@ jobs:
 
       - name: Setup kernel source
         run: |
-          git clone https://github.com/openFyde/kernel.git -b ${{ matrix.git_tag }}
+          git clone https://chromium.googlesource.com/chromiumos/third_party/kernel -b ${{ matrix.git_tag }}
           git reset --hard f4a8f4fd8d411b564fb6a63486cf61744a60283a
+
+      - name: Apply FydeOS patches
+        working-directory: kernel
+        run: |
+          git clone -b main https://github.com/openFyde/project-openfyde-patches.git
+          cp ./project-openfyde-patches/sys-kernel/chromeos-kernel-5_4/files/*.patch ./
+          ls -l | grep patch
+          git apply ./*.patch
 
       - name: Setup KernelSU
         working-directory: kernel
