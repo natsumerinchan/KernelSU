@@ -68,6 +68,7 @@ jobs:
       - name: Setup kernel source
         run: |
           git clone https://chromium.googlesource.com/chromiumos/third_party/kernel -b ${{ matrix.git_tag }}
+          cd kernel
           git reset --hard f4a8f4fd8d411b564fb6a63486cf61744a60283a
 
       - name: Apply FydeOS patches
