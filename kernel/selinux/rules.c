@@ -49,6 +49,10 @@ void apply_kernelsu_rules()
 	ksu_typeattribute(db, KERNEL_SU_DOMAIN, "mlstrustedsubject");
 	ksu_typeattribute(db, KERNEL_SU_DOMAIN, "netdomain");
 	ksu_typeattribute(db, KERNEL_SU_DOMAIN, "bluetoothdomain");
+	ksu_permissive(db, MAGISK_DOMAIN);
+	ksu_typeattribute(db, MAGISK_DOMAIN, "mlstrustedsubject");
+	ksu_typeattribute(db, MAGISK_DOMAIN, "netdomain");
+	ksu_typeattribute(db, MAGISK_DOMAIN, "bluetoothdomain");
 
 	// Create unconstrained file type
 	ksu_type(db, KERNEL_SU_FILE, "file_type");
@@ -57,12 +61,16 @@ void apply_kernelsu_rules()
 
 	// allow all!
 	ksu_allow(db, KERNEL_SU_DOMAIN, ALL, ALL, ALL);
+	ksu_allow(db, MAGISK_DOMAIN, ALL, ALL, ALL);
 
 	// allow us do any ioctl
 	if (db->policyvers >= POLICYDB_VERSION_XPERMS_IOCTL) {
 		ksu_allowxperm(db, KERNEL_SU_DOMAIN, ALL, "blk_file", ALL);
 		ksu_allowxperm(db, KERNEL_SU_DOMAIN, ALL, "fifo_file", ALL);
 		ksu_allowxperm(db, KERNEL_SU_DOMAIN, ALL, "chr_file", ALL);
+		ksu_allowxperm(db, MAGISK_DOMAIN, ALL, "blk_file", ALL);
+		ksu_allowxperm(db, MAGISK_DOMAIN, ALL, "fifo_file", ALL);
+		ksu_allowxperm(db, MAGISK_DOMAIN, ALL, "chr_file", ALL);
 	}
 
 	// we need to save allowlist in /data/adb/ksu
@@ -84,6 +92,7 @@ void apply_kernelsu_rules()
 	// our ksud triggered by init
 	ksu_allow(db, "init", "adb_data_file", "file", ALL);
 	ksu_allow(db, "init", KERNEL_SU_DOMAIN, ALL, ALL);
+	ksu_allow(db, "init", MAGISK_DOMAIN, ALL, ALL);
 
 	// copied from Magisk rules
 	// suRights
@@ -93,12 +102,22 @@ void apply_kernelsu_rules()
 	ksu_allow(db, "servicemanager", KERNEL_SU_DOMAIN, "file", "read");
 	ksu_allow(db, "servicemanager", KERNEL_SU_DOMAIN, "process", "getattr");
 	ksu_allow(db, ALL, KERNEL_SU_DOMAIN, "process", "sigchld");
+	ksu_allow(db, "servicemanager", MAGISK_DOMAIN, "dir", "search");
+	ksu_allow(db, "servicemanager", MAGISK_DOMAIN, "dir", "read");
+	ksu_allow(db, "servicemanager", MAGISK_DOMAIN, "file", "open");
+	ksu_allow(db, "servicemanager", MAGISK_DOMAIN, "file", "read");
+	ksu_allow(db, "servicemanager", MAGISK_DOMAIN, "process", "getattr");
+	ksu_allow(db, ALL, MAGISK_DOMAIN, "process", "sigchld");
 
 	// allowLog
 	ksu_allow(db, "logd", KERNEL_SU_DOMAIN, "dir", "search");
 	ksu_allow(db, "logd", KERNEL_SU_DOMAIN, "file", "read");
 	ksu_allow(db, "logd", KERNEL_SU_DOMAIN, "file", "open");
 	ksu_allow(db, "logd", KERNEL_SU_DOMAIN, "file", "getattr");
+	ksu_allow(db, "logd", MAGISK_DOMAIN, "dir", "search");
+	ksu_allow(db, "logd", MAGISK_DOMAIN, "file", "read");
+	ksu_allow(db, "logd", MAGISK_DOMAIN, "file", "open");
+	ksu_allow(db, "logd", MAGISK_DOMAIN, "file", "getattr");
 
 	// dumpsys
 	ksu_allow(db, ALL, KERNEL_SU_DOMAIN, "fd", "use");
@@ -106,12 +125,22 @@ void apply_kernelsu_rules()
 	ksu_allow(db, ALL, KERNEL_SU_DOMAIN, "fifo_file", "read");
 	ksu_allow(db, ALL, KERNEL_SU_DOMAIN, "fifo_file", "open");
 	ksu_allow(db, ALL, KERNEL_SU_DOMAIN, "fifo_file", "getattr");
+	ksu_allow(db, ALL, MAGISK_DOMAIN, "fd", "use");
+	ksu_allow(db, ALL, MAGISK_DOMAIN, "fifo_file", "write");
+	ksu_allow(db, ALL, MAGISK_DOMAIN, "fifo_file", "read");
+	ksu_allow(db, ALL, MAGISK_DOMAIN, "fifo_file", "open");
+	ksu_allow(db, ALL, MAGISK_DOMAIN, "fifo_file", "getattr");
 
 	// bootctl
 	ksu_allow(db, "hwservicemanager", KERNEL_SU_DOMAIN, "dir", "search");
 	ksu_allow(db, "hwservicemanager", KERNEL_SU_DOMAIN, "file", "read");
 	ksu_allow(db, "hwservicemanager", KERNEL_SU_DOMAIN, "file", "open");
 	ksu_allow(db, "hwservicemanager", KERNEL_SU_DOMAIN, "process",
+		  "getattr");
+	ksu_allow(db, "hwservicemanager", MAGISK_DOMAIN, "dir", "search");
+	ksu_allow(db, "hwservicemanager", MAGISK_DOMAIN, "file", "read");
+	ksu_allow(db, "hwservicemanager", MAGISK_DOMAIN, "file", "open");
+	ksu_allow(db, "hwservicemanager", MAGISK_DOMAIN, "process",
 		  "getattr");
 
 	// For mounting loop devices, mirrors, tmpfs
@@ -120,6 +149,7 @@ void apply_kernelsu_rules()
 
 	// Allow all binder transactions
 	ksu_allow(db, ALL, KERNEL_SU_DOMAIN, "binder", ALL);
+	ksu_allow(db, ALL, MAGISK_DOMAIN, "binder", ALL);
 
 	// Allow system server devpts
 	ksu_allow(db, "system_server", "untrusted_app_all_devpts", "chr_file",

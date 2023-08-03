@@ -7,6 +7,7 @@
 #endif
 
 #define KERNEL_SU_DOMAIN "u:r:su:s0"
+#define MAGISK_DOMAIN "u:r:magisk:s0"
 
 static u32 ksu_sid;
 
