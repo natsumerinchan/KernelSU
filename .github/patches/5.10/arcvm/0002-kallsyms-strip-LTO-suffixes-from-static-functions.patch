@@ -1,0 +1,78 @@
+From 2a710a626354016cd0344b848adeedb6e31ae643 Mon Sep 17 00:00:00 2001
+From: Nathan Chancellor <nathan@kernel.org>
+Date: Tue, 21 Mar 2023 15:04:24 +0800
+Subject: [PATCH] kallsyms: strip LTO suffixes from static functions
+
+https://lore.kernel.org/all/1fd40e80-283f-62e9-a0fa-84ad68047a23@kernel.org/#r
+---
+ kernel/kallsyms.c | 47 ++++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 34 insertions(+), 13 deletions(-)
+
+diff --git a/kernel/kallsyms.c b/kernel/kallsyms.c
+index 96505113b907..ed024a0e0d34 100644
+--- a/kernel/kallsyms.c
++++ b/kernel/kallsyms.c
+@@ -161,25 +161,47 @@ static unsigned long kallsyms_sym_address(int idx)
+ 	return kallsyms_relative_base - 1 - kallsyms_offsets[idx];
+ }
+ 
+-#if defined(CONFIG_CFI_CLANG) && defined(CONFIG_LTO_CLANG_THIN)
+-/*
+- * LLVM appends a hash to static function names when ThinLTO and CFI are
+- * both enabled, which causes confusion and potentially breaks user space
+- * tools, so we will strip the postfix from expanded symbol names.
+- */
+-static inline char *cleanup_symbol_name(char *s)
++static bool cleanup_symbol_name(char *s)
+ {
+-	char *res = NULL;
++	char *res;
+ 
+-	res = strrchr(s, '$');
+-	if (res)
++	if (!IS_ENABLED(CONFIG_LTO_CLANG))
++		return false;
++ 
++	/*
++	 * LLVM appends various suffixes for local functions and variables that must
++	 * be promoted to global scope as part of LTO.  This can break hooking of
++	 * static functions with kprobes. '.' is not a valid character in an
++	 * identifier in C. Suffixes observed:
++	 * - foo.llvm.[0-9a-f]
++	 * - foo.[0-9a-f]
++	 * - foo.[0-9a-f].cfi_jt
++	 */
++	res = strchr(s, '.');
++	if (res) {
+ 		*res = '\0';
++		return true;
++	}
+ 
+-	return res;
++	if (!IS_ENABLED(CONFIG_CFI_CLANG) ||
++		!IS_ENABLED(CONFIG_THINLTO) ||
++	    CONFIG_CLANG_VERSION >= 130000)
++			return false;
++
++	/*
++	 * Prior to LLVM 13, the following suffixes were observed when thinLTO
++	 * and CFI are both enabled:
++	 * - foo$[0-9]
++	 */
++
++	res = strrchr(s, '$');
++	if (res) {
++ 		*res = '\0';
++		return true;
++	}
++
++	return false;
+ }
+-#else
+-static inline char *cleanup_symbol_name(char *s) { return NULL; }
+-#endif
+ 
+ /* Lookup the address for this symbol. Returns 0 if not found. */
+ unsigned long kallsyms_lookup_name(const char *name)
+-- 
+2.40.0

@@ -43,7 +43,7 @@ jobs:
 
           sudo ln -s --force python3 /usr/bin/python
 
-          export LLVM_VERSION=12
+          export LLVM_VERSION=17
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh $LLVM_VERSION
@@ -81,7 +81,9 @@ jobs:
           grep -q "kernelsu" $DRIVER_MAKEFILE || echo "obj-y += kernelsu/" >> $DRIVER_MAKEFILE
 
           echo "[+] Apply KernelSU patches"
-          cd $KERNEL_ROOT && git apply $GITHUB_WORKSPACE/KernelSU/.github/patches/5.10/*.patch
+          cd $KERNEL_ROOT
+          git apply $GITHUB_WORKSPACE/KernelSU/.github/patches/5.10/*.patch
+          git apply $GITHUB_WORKSPACE/KernelSU/.github/patches/5.10/arcvm/*.patch
 
           echo "[+] Patch script/setlocalversion"
           sed -i 's/-dirty//g' $KERNEL_ROOT/scripts/setlocalversion
