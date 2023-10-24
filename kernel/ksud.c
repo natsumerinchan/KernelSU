@@ -549,6 +549,9 @@ static void stop_input_hook()
 void ksu_enable_ksud()
 {
 #ifdef CONFIG_KPROBES
+#ifdef CONFIG_LTO
+	execve_kp.symbol_name = find_llvm_funcname(execve_kp.symbol_name);
+#endif
 	int ret;
 
 	ret = register_kprobe(&execve_kp);

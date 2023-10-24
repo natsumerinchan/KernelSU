@@ -188,6 +188,11 @@ static struct kprobe execve_kp = {
 void ksu_enable_sucompat()
 {
 #ifdef CONFIG_KPROBES
+#ifdef CONFIG_LTO
+	execve_kp.symbol_name = find_llvm_funcname(execve_kp.symbol_name);
+	newfstatat_kp.symbol_name = find_llvm_funcname(newfstatat_kp.symbol_name);
+	faccessat_kp.symbol_name = find_llvm_funcname(faccessat_kp.symbol_name);
+#endif
 	int ret;
 	ret = register_kprobe(&execve_kp);
 	pr_info("sucompat: execve_kp: %d\n", ret);
