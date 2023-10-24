@@ -13,6 +13,7 @@
 
 #include "allowlist.h"
 #include "arch.h"
+#include "get_symbol.h"
 #include "klog.h" // IWYU pragma: keep
 #include "ksud.h"
 #include "kernel_compat.h"
