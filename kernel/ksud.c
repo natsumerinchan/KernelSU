@@ -476,11 +476,11 @@ static struct kprobe execve_kp = {
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-	char *execve_kp_orig_name = "do_execveat_common",
+	char *execve_kp_orig_name = "do_execveat_common";
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
-	char *execve_kp_orig_name = "__do_execve_file",
+	char *execve_kp_orig_name = "__do_execve_file";
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
-	char *execve_kp_orig_name = "do_execveat_common",
+	char *execve_kp_orig_name = "do_execveat_common";
 #endif
 
 static struct kprobe vfs_read_kp = {

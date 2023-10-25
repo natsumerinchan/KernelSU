@@ -159,9 +159,9 @@ static struct kprobe faccessat_kp = {
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
-	char *faccessat_kp_orig_name = "do_faccessat",
+	char *faccessat_kp_orig_name = "do_faccessat";
 #else
-	char *faccessat_kp_orig_name = "sys_faccessat",
+	char *faccessat_kp_orig_name = "sys_faccessat";
 #endif
 
 static struct kprobe newfstatat_kp = {
@@ -169,9 +169,9 @@ static struct kprobe newfstatat_kp = {
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-	char *newfstatat_kp_orig_name = "vfs_statx",
+	char *newfstatat_kp_orig_name = "vfs_statx";
 #else
-	char *newfstatat_kp_orig_name = "vfs_fstatat",
+	char *newfstatat_kp_orig_name = "vfs_fstatat";
 #endif
 
 static struct kprobe execve_kp = {
@@ -179,11 +179,11 @@ static struct kprobe execve_kp = {
 };
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-	char *execve_kp_orig_name = "do_execveat_common",
+	char *execve_kp_orig_name = "do_execveat_common";
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
-	char *execve_kp_orig_name = "__do_execve_file",
+	char *execve_kp_orig_name = "__do_execve_file";
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
-	char *execve_kp_orig_name = "do_execveat_common",
+	char *execve_kp_orig_name = "do_execveat_common";
 #endif
 
 #endif
