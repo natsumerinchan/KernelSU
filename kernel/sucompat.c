@@ -155,33 +155,36 @@ static int execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
 }
 
 static struct kprobe faccessat_kp = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
-	.symbol_name = "do_faccessat",
-#else
-	.symbol_name = "sys_faccessat",
-#endif
 	.pre_handler = faccessat_handler_pre,
 };
 
-static struct kprobe newfstatat_kp = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
-	.symbol_name = "vfs_statx",
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
+	char *faccessat_kp_orig_name = "do_faccessat",
 #else
-	.symbol_name = "vfs_fstatat",
+	char *faccessat_kp_orig_name = "sys_faccessat",
 #endif
+
+static struct kprobe newfstatat_kp = {
 	.pre_handler = newfstatat_handler_pre,
 };
 
-static struct kprobe execve_kp = {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
-	.symbol_name = "do_execveat_common",
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
-	.symbol_name = "__do_execve_file",
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
-	.symbol_name = "do_execveat_common",
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+	char *newfstatat_kp_orig_name = "vfs_statx",
+#else
+	char *newfstatat_kp_orig_name = "vfs_fstatat",
 #endif
+
+static struct kprobe execve_kp = {
 	.pre_handler = execve_handler_pre,
 };
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
+	char *execve_kp_orig_name = "do_execveat_common",
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)
+	char *execve_kp_orig_name = "__do_execve_file",
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
+	char *execve_kp_orig_name = "do_execveat_common",
+#endif
 
 #endif
 
@@ -190,9 +193,9 @@ void ksu_enable_sucompat()
 {
 #ifdef CONFIG_KPROBES
 #ifdef CONFIG_LTO
-	execve_kp.symbol_name = find_llvm_funcname(execve_kp.symbol_name);
-	newfstatat_kp.symbol_name = find_llvm_funcname(newfstatat_kp.symbol_name);
-	faccessat_kp.symbol_name = find_llvm_funcname(faccessat_kp.symbol_name);
+	execve_kp.symbol_name = find_llvm_funcname(execve_kp_orig_name);
+	newfstatat_kp.symbol_name = find_llvm_funcname(newfstatat_kp_orig_name);
+	faccessat_kp.symbol_name = find_llvm_funcname(faccessat_kp_orig_name);
 #endif
 	int ret;
 	ret = register_kprobe(&execve_kp);
