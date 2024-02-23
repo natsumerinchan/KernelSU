@@ -91,56 +91,69 @@ pub fn mount_overlayfs(
     workdir: Option<PathBuf>,
     dest: impl AsRef<Path>,
 ) -> Result<()> {
-    let lowerdir_config = lower_dirs
-        .iter()
-        .map(|s| s.as_ref())
-        .chain(std::iter::once(lowest))
-        .collect::<Vec<_>>()
-        .join(":");
-    info!(
-        "mount overlayfs on {:?}, lowerdir={}, upperdir={:?}, workdir={:?}",
-        dest.as_ref(),
-        lowerdir_config,
-        upperdir,
-        workdir
-    );
-    if let Result::Ok(fs) = fsopen("overlay", FsOpenFlags::FSOPEN_CLOEXEC) {
-        let fs = fs.as_fd();
-        fsconfig_set_string(fs, "lowerdir", lowerdir_config)?;
-        if let (Some(upperdir), Some(workdir)) = (upperdir, workdir) {
-            if upperdir.exists() && workdir.exists() {
-                fsconfig_set_string(fs, "upperdir", upperdir.display().to_string())?;
-                fsconfig_set_string(fs, "workdir", workdir.display().to_string())?;
+    let lowerdir_config = lower_dirs.iter().map(AsRef::as_ref).chain(std::iter::once(lowest)).collect::<Vec<_>>().join(":");
+
+    info!("Attempting to mount overlayfs with new API on {:?}", dest.as_ref());
+    
+    // 尝试使用新的API挂载文件系统
+    match fsopen("overlay", FsOpenFlags::FSOPEN_CLOEXEC) {
+        Ok(fs) => {
+            let fs = fs.as_fd();
+            fsconfig_set_string(fs, "lowerdir", &lowerdir_config)?;
+            if let Some(upperdir) = &upperdir {
+                if let Some(workdir) = &workdir {
+                    if upperdir.exists() && workdir.exists() {
+                        fsconfig_set_string(fs, "upperdir", &upperdir.display().to_string())?;
+                        fsconfig_set_string(fs, "workdir", &workdir.display().to_string())?;
+                    }
+                }
+            }
+            fsconfig_set_string(fs, "source", KSU_OVERLAY_SOURCE)?;
+            fsconfig_create(fs)?;
+            let mount = fsmount(fs, FsMountFlags::FSMOUNT_CLOEXEC, MountAttrFlags::empty())?;
+
+            // 在挂载成功之后添加日志
+            info!("Successfully mounted overlayfs with new API on {:?}", dest.as_ref());
+            
+            move_mount(
+                mount.as_fd(),
+                "",
+                CWD,
+                dest.as_ref(),
+                MoveMountFlags::MOVE_MOUNT_F_EMPTY_PATH,
+            )?;
+        },
+        Err(e) => {
+            // 在挂载失败时添加日志
+            warn!("Failed to mount overlayfs with new API on {:?}: {:?}", dest.as_ref(), e);
+
+            // 回退到传统方法
+            let mut data = format!("lowerdir={}", lowerdir_config);
+            if let (Some(upperdir), Some(workdir)) = (&upperdir, &workdir) {
+                if upperdir.exists() && workdir.exists() {
+                    data = format!(
+                        "{},upperdir={},workdir={}",
+                        data,
+                        upperdir.display(),
+                        workdir.display()
+                    );
+                }
+            }
+            warn!("Attempting to mount overlayfs with fallback traditional method on {:?}", dest.as_ref());
+            match mount(
+                KSU_OVERLAY_SOURCE,
+                dest.as_ref(),
+                "overlay",
+                MountFlags::empty(),
+                &data,
+            ) {
+                Ok(_) => info!("Successfully mounted overlayfs with fallback traditional method on {:?}", dest.as_ref()),
+                Err(e) => {
+                    error!("Failed to mount overlayfs with both new and traditional methods on {:?}: {:?}", dest.as_ref(), e);
+                    return Err(e.into());
+                }
             }
         }
-        fsconfig_set_string(fs, "source", KSU_OVERLAY_SOURCE)?;
-        fsconfig_create(fs)?;
-        let mount = fsmount(fs, FsMountFlags::FSMOUNT_CLOEXEC, MountAttrFlags::empty())?;
-        move_mount(
-            mount.as_fd(),
-            "",
-            CWD,
-            dest.as_ref(),
-            MoveMountFlags::MOVE_MOUNT_F_EMPTY_PATH,
-        )?;
-    } else {
-        let mut data = format!("lowerdir={lowerdir_config}");
-        if let (Some(upperdir), Some(workdir)) = (upperdir, workdir) {
-            if upperdir.exists() && workdir.exists() {
-                data = format!(
-                    "{data},upperdir={},workdir={}",
-                    upperdir.display(),
-                    workdir.display()
-                );
-            }
-        }
-        mount(
-            KSU_OVERLAY_SOURCE,
-            dest.as_ref(),
-            "overlay",
-            MountFlags::empty(),
-            data,
-        )?;
     }
     Ok(())
 }
