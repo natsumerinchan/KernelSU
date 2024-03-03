@@ -89,6 +89,63 @@ pub fn umount_dir(src: impl AsRef<Path>) -> Result<()> {
 }
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
+pub fn mount_overlayfs_fsopen(
+    lowerdir_config: &str,
+    upperdir: Option<PathBuf>,
+    workdir: Option<PathBuf>,
+    dest: impl AsRef<Path>,
+) -> Result<()> {
+    let fs = fsopen("overlay", FsOpenFlags::FSOPEN_CLOEXEC)?;
+    let fs = fs.as_fd();
+    fsconfig_set_string(fs, "lowerdir", lowerdir_config)?;
+    if let (Some(upperdir), Some(workdir)) = (upperdir.as_ref(), workdir.as_ref()) {
+        if upperdir.exists() && workdir.exists() {
+            fsconfig_set_string(fs, "upperdir", upperdir.display().to_string())?;
+            fsconfig_set_string(fs, "workdir", workdir.display().to_string())?;
+        }
+    }
+    fsconfig_set_string(fs, "source", KSU_OVERLAY_SOURCE)?;
+    fsconfig_create(fs)?;
+    let mount = fsmount(fs, FsMountFlags::FSMOUNT_CLOEXEC, MountAttrFlags::empty())?;
+    move_mount(
+        mount.as_fd(),
+        "",
+        CWD,
+        dest.as_ref(),
+        MoveMountFlags::MOVE_MOUNT_F_EMPTY_PATH,
+    )?;
+    Ok(())
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+pub fn mount_overlayfs_fallback(
+    lowerdir_config: &str,
+    upperdir: Option<PathBuf>,
+    workdir: Option<PathBuf>,
+    dest: impl AsRef<Path>,
+) -> Result<()> {
+    let mut data = format!("lowerdir={lowerdir_config}");
+    if let (Some(upperdir), Some(workdir)) = (upperdir, workdir) {
+        if upperdir.exists() && workdir.exists() {
+            data = format!(
+                "{},upperdir={},workdir={}",
+                data,
+                upperdir.display(),
+                workdir.display()
+            );
+        }
+    }
+    mount(
+        KSU_OVERLAY_SOURCE,
+        dest.as_ref(),
+        "overlay",
+        MountFlags::empty(),
+        &data,
+    )?;
+    Ok(())
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
 pub fn mount_overlayfs(
     lower_dirs: &[String],
     lowest: &str,
@@ -109,43 +166,16 @@ pub fn mount_overlayfs(
         upperdir,
         workdir
     );
-    if let Result::Ok(fs) = fsopen("overlay", FsOpenFlags::FSOPEN_CLOEXEC) {
-        let fs = fs.as_fd();
-        fsconfig_set_string(fs, "lowerdir", lowerdir_config)?;
-        if let (Some(upperdir), Some(workdir)) = (upperdir, workdir) {
-            if upperdir.exists() && workdir.exists() {
-                fsconfig_set_string(fs, "upperdir", upperdir.display().to_string())?;
-                fsconfig_set_string(fs, "workdir", workdir.display().to_string())?;
-            }
-        }
-        fsconfig_set_string(fs, "source", KSU_OVERLAY_SOURCE)?;
-        fsconfig_create(fs)?;
-        let mount = fsmount(fs, FsMountFlags::FSMOUNT_CLOEXEC, MountAttrFlags::empty())?;
-        move_mount(
-            mount.as_fd(),
-            "",
-            CWD,
-            dest.as_ref(),
-            MoveMountFlags::MOVE_MOUNT_F_EMPTY_PATH,
-        )?;
-    } else {
-        let mut data = format!("lowerdir={lowerdir_config}");
-        if let (Some(upperdir), Some(workdir)) = (upperdir, workdir) {
-            if upperdir.exists() && workdir.exists() {
-                data = format!(
-                    "{data},upperdir={},workdir={}",
-                    upperdir.display(),
-                    workdir.display()
-                );
-            }
-        }
-        mount(
-            KSU_OVERLAY_SOURCE,
-            dest.as_ref(),
-            "overlay",
-            MountFlags::empty(),
-            data,
-        )?;
+
+    if let Err(e) =
+        mount_overlayfs_fsopen(&lowerdir_config, upperdir.clone(), workdir.clone(), &dest)
+    {
+        warn!(
+            "mount_overlayfs_fsopen failed: {:?}, trying fallback method.",
+            e
+        );
+
+        mount_overlayfs_fallback(&lowerdir_config, upperdir, workdir, dest)?;
     }
     Ok(())
 }
