@@ -187,8 +187,7 @@ int ksu_handle_devpts(struct inode *inode)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
 		struct inode_security_struct *sec = selinux_inode(inode);
 #else
-		struct inode_security_struct *sec =
-			(struct inode_security_struct *)inode->i_security;
+		struct inode_security_struct *sec = (struct inode_security_struct *) inode->i_security;
 #endif
 		if (sec) {
 			sec->sid = ksu_devpts_sid;
@@ -320,23 +319,22 @@ static struct kprobe execve_kp = {
 };
 #endif
 
-static int pts_unix98_lookup_pre(struct kprobe *p, struct pt_regs *regs)
+static int devpts_get_priv_pre(struct kprobe *p, struct pt_regs *regs)
 {
 	struct inode *inode;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
-	struct file *file = (struct file *)PT_REGS_PARM2(regs);
-	inode = file->f_path.dentry->d_inode;
+	struct dentry *dentry = (struct dentry *)PT_REGS_PARM1(regs);
+	inode = dentry->d_inode;
 #else
-	inode = (struct inode *)PT_REGS_PARM2(regs);
+	inode = (struct inode *)PT_REGS_PARM1(regs);
 #endif
 
 	return ksu_handle_devpts(inode);
 }
 
-static struct kprobe pts_unix98_lookup_kp = { .symbol_name =
-						      "pts_unix98_lookup",
-					      .pre_handler =
-						      pts_unix98_lookup_pre };
+static struct kprobe devpts_get_priv_kp = { .symbol_name = "devpts_get_priv",
+					    .pre_handler =
+						    devpts_get_priv_pre };
 
 #endif
 
@@ -351,7 +349,7 @@ void ksu_sucompat_init()
 	pr_info("sucompat: newfstatat_kp: %d\n", ret);
 	ret = register_kprobe(&faccessat_kp);
 	pr_info("sucompat: faccessat_kp: %d\n", ret);
-	ret = register_kprobe(&pts_unix98_lookup_kp);
+	ret = register_kprobe(&devpts_get_priv_kp);
 	pr_info("sucompat: devpts_kp: %d\n", ret);
 #endif
 }
@@ -362,6 +360,6 @@ void ksu_sucompat_exit()
 	unregister_kprobe(&execve_kp);
 	unregister_kprobe(&newfstatat_kp);
 	unregister_kprobe(&faccessat_kp);
-	unregister_kprobe(&pts_unix98_lookup_kp);
+	unregister_kprobe(&devpts_get_priv_kp);
 #endif
 }
